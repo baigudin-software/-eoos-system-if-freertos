@@ -1,12 +1,13 @@
 /**
  * @file      sys.SchedulerRoutineTimer.hpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2017-2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2017-2024, Sergey Baigudin, Baigudin Software
  */
 #ifndef SYS_SCHEDULERROUTINETIMER_HPP_
 #define SYS_SCHEDULERROUTINETIMER_HPP_
 
-#include "sys.SchedulerRoutineBase.hpp"
+#include "sys.NonCopyable.hpp"
+#include "api.Runnable.hpp"
 
 namespace eoos
 {
@@ -17,9 +18,9 @@ namespace sys
  * @class SchedulerRoutineTimer
  * @brief Scheduler interrupt service routine.
  */
-class SchedulerRoutineTimer : public SchedulerRoutineBase
+class SchedulerRoutineTimer : public NonCopyable<NoAllocator>, public api::Runnable
 {
-    typedef SchedulerRoutineBase Parent;
+    typedef NonCopyable<NoAllocator> Parent;
 
 public:
 
@@ -32,9 +33,14 @@ public:
      * @brief Destructor.
      */
     virtual ~SchedulerRoutineTimer();
+    
+    /**
+     * @copydoc eoos::api::Object::isConstructed()
+     */
+    virtual bool_t isConstructed() const;
 
     /**
-     * @copydoc eoos::api::Task::start()
+     * @copydoc eoos::api::Runnable::start()
      */
     virtual void start();
 

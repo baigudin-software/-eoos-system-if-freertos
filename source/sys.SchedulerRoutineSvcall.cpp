@@ -1,7 +1,7 @@
 /**
  * @file      sys.SchedulerRoutineSvcall.cpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2017-2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2017-2024, Sergey Baigudin, Baigudin Software
  */
 #include "sys.SchedulerRoutineSvcall.hpp"
 
@@ -11,13 +11,19 @@ namespace sys
 {
 
 SchedulerRoutineSvcall::SchedulerRoutineSvcall()
-    : SchedulerRoutineBase() {
+    : NonCopyable<NoAllocator>()
+    , api::Runnable() {
     bool_t const isConstructed( construct() );
     setConstructed( isConstructed );    
 }
 
 SchedulerRoutineSvcall::~SchedulerRoutineSvcall()
 {
+}
+
+bool_t SchedulerRoutineSvcall::isConstructed() const
+{
+    return Parent::isConstructed();
 }
 
 void SchedulerRoutineSvcall::start()

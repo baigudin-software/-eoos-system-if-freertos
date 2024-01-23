@@ -1,7 +1,7 @@
 /**
  * @file      sys.SchedulerRoutineTimer.cpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2017-2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2017-2024, Sergey Baigudin, Baigudin Software
  */
 #include "sys.SchedulerRoutineTimer.hpp"
 
@@ -11,13 +11,19 @@ namespace sys
 {
 
 SchedulerRoutineTimer::SchedulerRoutineTimer()
-    : SchedulerRoutineBase() {
+    : NonCopyable<NoAllocator>()
+    , api::Runnable() {
     bool_t const isConstructed( construct() );
     setConstructed( isConstructed );    
 }
 
 SchedulerRoutineTimer::~SchedulerRoutineTimer()
 {
+}
+
+bool_t SchedulerRoutineTimer::isConstructed() const
+{
+    return Parent::isConstructed();
 }
 
 void SchedulerRoutineTimer::start()
