@@ -1,10 +1,10 @@
 /**
- * @file      sys.Thread.hpp
+ * @file      sys.ThreadResource.hpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2014-2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2014-2024, Sergey Baigudin, Baigudin Software
  */
-#ifndef SYS_THREAD_HPP_
-#define SYS_THREAD_HPP_
+#ifndef SYS_THREADRESOURCE_HPP_
+#define SYS_THREADRESOURCE_HPP_
 
 #include "sys.NonCopyable.hpp"
 #include "api.Thread.hpp"
@@ -16,13 +16,13 @@ namespace sys
 {
 
 /**
- * @class Thread
- * @brief Thread class.
+ * @class ThreadResource
+ * @brief Thread resource class.
  * 
  * @tparam A Heap memory allocator class.
  */
 template <class A>
-class Thread : public NonCopyable<A>, public api::Thread
+class ThreadResource : public NonCopyable<A>, public api::Thread
 {
     typedef NonCopyable<A> Parent;
 
@@ -33,12 +33,12 @@ public:
      *
      * @param task A task interface whose main method is invoked when this thread is started.
      */
-    Thread(api::Task& task);
+    ThreadResource(api::Task& task);
 
     /**
      * @brief Destructor.
      */
-    virtual ~Thread();
+    virtual ~ThreadResource();
 
     /**
      * @copydoc eoos::api::Object::isConstructed()
@@ -77,6 +77,22 @@ private:
      * @return True if object has been constructed successfully.
      */
     bool_t construct();
+
+    /**
+     * @brief Converts priority EOOS API to FreeRTOS API.
+     *
+     * @param priority A EOOS priority.
+     * @return A FreeRTOS priority.
+     */
+    static ::UBaseType_t convertPriority(int32_t priority);
+    
+    /**
+     * @brief Tests priority is valid.
+     *
+     * @param priority A priority level.
+     * @return True if is valid.
+     */
+    static bool_t isPriority(int32_t priority);
 
     /**
      * @brief Starts a thread routine.
@@ -123,7 +139,7 @@ private:
 };
 
 template <class A>
-Thread<A>::Thread(api::Task& task) 
+ThreadResource<A>::ThreadResource(api::Task& task) 
     : NonCopyable<A>()
     , api::Thread()
     , task_( &task )
@@ -136,7 +152,7 @@ Thread<A>::Thread(api::Task& task)
 }
 
 template <class A>
-Thread<A>::~Thread()
+ThreadResource<A>::~ThreadResource()
 {
     if( thread_ != NULL )
     {
@@ -146,13 +162,13 @@ Thread<A>::~Thread()
 }
 
 template <class A>
-bool_t Thread<A>::isConstructed() const ///< SCA MISRA-C++:2008 Justified Rule 10-3-1
+bool_t ThreadResource<A>::isConstructed() const ///< SCA MISRA-C++:2008 Justified Rule 10-3-1
 {
     return Parent::isConstructed();
 }
 
 template <class A>
-bool_t Thread<A>::execute()
+bool_t ThreadResource<A>::execute()
 {
     bool_t res( false );
     do{
@@ -168,7 +184,7 @@ bool_t Thread<A>::execute()
         const char* pcName( "EOOS Thread" );
         uint32_t ulStackDepth( THREAD_STACK_DEPTH );
         void* pvParameters( this );
-        ::UBaseType_t uxPriority( tskIDLE_PRIORITY + 1 );
+        ::UBaseType_t uxPriority( convertPriority(priority_) );
         ::StackType_t* puxStackBuffer( reinterpret_cast<::StackType_t*>(stack_) );
         ::StaticTask_t* pxTaskBuffer( &tcb_ );
         thread_ = ::xTaskCreateStatic( 
@@ -191,7 +207,7 @@ bool_t Thread<A>::execute()
 }
 
 template <class A>
-bool_t Thread<A>::join()
+bool_t ThreadResource<A>::join()
 {
     bool_t res( false );    
     if( isConstructed() && (status_ == STATUS_RUNNABLE) )
@@ -210,44 +226,52 @@ bool_t Thread<A>::join()
 }
 
 template <class A>
-int32_t Thread<A>::getPriority() const
+int32_t ThreadResource<A>::getPriority() const
 {
     return isConstructed() ? priority_ : PRIORITY_WRONG;        
 }
 
 template <class A>
-bool_t Thread<A>::setPriority(int32_t priority)
+bool_t ThreadResource<A>::setPriority(int32_t priority)
 {
     bool_t res( false );
-    if( isConstructed() )
+    if( isConstructed() && isPriority(priority) )
     {
-        if( (PRIORITY_MIN <= priority) && (priority <= PRIORITY_MAX) )
+        switch( status_ )
         {
-            priority_ = priority;
-            res = true;
-        }
-        else if (priority == PRIORITY_LOCK)
-        {
-            priority_ = priority;
-            res = true;
-        }
-        else 
-        {
-            res = false;
+            case STATUS_RUNNABLE:
+            {
+                ::UBaseType_t uxNewPriority( convertPriority(priority) );
+                ::vTaskPrioritySet( thread_, uxNewPriority );
+                priority_ = priority;
+                break;
+            }
+            case STATUS_NEW:
+            {
+                priority_ = priority;                
+                break;
+            }
+            default:
+            {
+                break;
+            }
         }
     }
-    // @todo Implemet setting priority on system level regarding common API rage
     return res;
 }
 
 template <class A>
-bool_t Thread<A>::construct()
+bool_t ThreadResource<A>::construct()
 {  
     bool_t res( false );
     do
     {
         if( !isConstructed() )
         {   ///< UT Justified Branch: HW dependency
+            break;
+        }
+        if( PRIORITY_MAX >= configMAX_PRIORITIES )
+        {
             break;
         }
         if( task_ == NULLPTR )
@@ -269,12 +293,37 @@ bool_t Thread<A>::construct()
 }
 
 template <class A>
-void Thread<A>::start(void* pvParameters)
+::UBaseType_t ThreadResource<A>::convertPriority(int32_t priority)
 {
-    Thread* thread( NULLPTR );
+    return static_cast<::UBaseType_t>(priority);
+}
+
+template <class A>
+bool_t ThreadResource<A>::isPriority(int32_t priority)
+{   
+    bool_t res( false );
+    if( (PRIORITY_MIN <= priority) && (priority <= PRIORITY_MAX) )
+    {
+        res = true;
+    }
+    else if (priority == PRIORITY_IDLE)
+    {
+        res = true;
+    }
+    else 
+    {
+        res = false;
+    }
+    return res;
+}
+
+template <class A>
+void ThreadResource<A>::start(void* pvParameters)
+{
+    ThreadResource* thread( NULLPTR );
     do
     {
-        thread = reinterpret_cast<Thread*>(pvParameters);
+        thread = reinterpret_cast<ThreadResource*>(pvParameters);
         if(thread == NULLPTR)
         {   
             break;
@@ -301,4 +350,4 @@ void Thread<A>::start(void* pvParameters)
 
 } // namespace sys
 } // namespace eoos
-#endif // SYS_THREAD_HPP_
+#endif // SYS_THREADRESOURCE_HPP_

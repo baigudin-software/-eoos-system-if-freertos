@@ -1,7 +1,7 @@
 /**
  * @file      sys.SemaphoreManager.cpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2023-2024, Sergey Baigudin, Baigudin Software
  */
 #include "sys.SemaphoreManager.hpp"
 #include "lib.UniquePointer.hpp"
@@ -36,7 +36,7 @@ api::Semaphore* SemaphoreManager::create(int32_t permits)
     api::Semaphore* ptr( NULLPTR );
     if( isConstructed() )
     {
-        lib::UniquePointer<api::Semaphore> res( new Resource(permits) );
+        lib::UniquePointer<api::Semaphore> res( new Resource(Resource::TYPE_COUNTING, permits) );
         if( !res.isNull() )
         {
             if( !res->isConstructed() )

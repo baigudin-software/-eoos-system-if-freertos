@@ -1,7 +1,7 @@
 /**
  * @file      sys.Scheduler.hpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2017-2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2017-2024, Sergey Baigudin, Baigudin Software
  */
 #ifndef SYS_SCHEDULER_HPP_
 #define SYS_SCHEDULER_HPP_
@@ -9,7 +9,7 @@
 #include "sys.NonCopyable.hpp"
 #include "api.Scheduler.hpp"
 #include "api.CpuProcessor.hpp"
-#include "sys.Thread.hpp"
+#include "sys.ThreadResource.hpp"
 #include "sys.SchedulerRoutineTimer.hpp"
 #include "sys.SchedulerRoutineSvcall.hpp"
 #include "sys.Mutex.hpp"
@@ -27,7 +27,7 @@ namespace sys
 class Scheduler : public NonCopyable<NoAllocator>, public api::Scheduler
 {
     typedef NonCopyable<NoAllocator> Parent;
-    typedef Thread<Scheduler> Resource;
+    typedef ThreadResource<Scheduler> Resource;
 
 public:
 
@@ -76,8 +76,30 @@ public:
      *
      * @param ptr Address of allocated memory block or a null pointer.
      */
-    static void free(void* ptr);  
+    static void free(void* ptr);
 
+    /**
+     * @brief Causes current thread to sleep.
+     *
+     * @param ms A time to sleep in milliseconds.
+     * @return True if thread slept requested time.
+     */
+    static bool_t sleepThread(int32_t const ms);
+
+    /**
+     * @brief Yields to next thread.
+     * 
+     * @return True if thread is yielded.
+     */
+    static bool_t yieldThread();
+    
+    /**
+     * @brief Yields to next thread from ISR.
+     * 
+     * @return True if thread is yielded.
+     */
+    static void yieldThreadFromInterrupt();
+    
 protected:
 
     using Parent::setConstructed;    
@@ -144,7 +166,7 @@ private:
         /**
          * @brief Mutex resource.
          */    
-        Mutex<NoAllocator> mutex_;
+        Mutex mutex_;
         
     public:
         
@@ -189,6 +211,11 @@ private:
      * @brief Target CPU interrupt resource.
      */    
     api::CpuInterrupt* intSvc_;
+
+    /**
+     * @brief Target CPU interrupt resource.
+     */    
+    api::CpuInterrupt* intPendSv_;
 
     /**
      * @brief Resource memory pool.

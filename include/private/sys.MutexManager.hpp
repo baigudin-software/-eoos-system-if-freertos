@@ -1,7 +1,7 @@
 /**
  * @file      sys.MutexManager.hpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2023-2024, Sergey Baigudin, Baigudin Software
  */
 #ifndef SYS_MUTEXMANAGER_HPP_
 #define SYS_MUTEXMANAGER_HPP_
@@ -23,7 +23,7 @@ namespace sys
 class MutexManager : public NonCopyable<NoAllocator>, public api::MutexManager
 {
     typedef NonCopyable<NoAllocator> Parent;
-    typedef Mutex<MutexManager> Resource;    
+    typedef MutexResource<MutexManager> Resource;    
 
 public:
 
@@ -107,7 +107,7 @@ private:
         /**
          * @brief Mutex resource.
          */    
-        Mutex<NoAllocator> mutex_;
+        Mutex mutex_;
         
     public:
         

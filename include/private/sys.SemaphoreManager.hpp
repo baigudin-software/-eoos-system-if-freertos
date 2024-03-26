@@ -1,7 +1,7 @@
 /**
  * @file      sys.SemaphoreManager.hpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2023-2024, Sergey Baigudin, Baigudin Software
  */
 #ifndef SYS_SEMAPHOREMANAGER_HPP_
 #define SYS_SEMAPHOREMANAGER_HPP_
@@ -24,7 +24,7 @@ namespace sys
 class SemaphoreManager : public NonCopyable<NoAllocator>, public api::SemaphoreManager
 {
     typedef NonCopyable<NoAllocator> Parent;
-    typedef Semaphore<SemaphoreManager> Resource;
+    typedef SemaphoreResource<SemaphoreManager> Resource;
 
 public:
 
@@ -108,7 +108,7 @@ private:
         /**
          * @brief Mutex resource.
          */    
-        Mutex<NoAllocator> mutex_;
+        Mutex mutex_;
         
     public:
         

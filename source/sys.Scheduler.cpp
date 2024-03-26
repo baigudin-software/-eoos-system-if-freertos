@@ -22,6 +22,7 @@ Scheduler::Scheduler(api::CpuProcessor& cpu)
     , tim_( NULLPTR )
     , intTim_( NULLPTR )
     , intSvc_( NULLPTR )
+    , intPendSv_( NULLPTR )
     , pool_() {
     bool_t const isConstructed( construct() );
     setConstructed( isConstructed );    
@@ -60,13 +61,7 @@ bool_t Scheduler::sleep(int32_t ms)
     bool_t res( false );
     if( isConstructed() )
     {
-        int32_t time( ms / 1000 );
-        res = sSleep(time);
-        if( res == true )
-        {
-            time = ms % 1000;
-            res = msSleep(time);
-        }
+        res = sleepThread(ms);
     }
     return res;
 }
@@ -76,8 +71,7 @@ bool_t Scheduler::yield()
     bool_t res( false );
     if( isConstructed() )
     {
-        taskYIELD();
-        res = true;
+        res = yieldThread();
     }
     return res;
 }
@@ -165,6 +159,30 @@ void Scheduler::free(void* ptr)
     }
 }
 
+bool_t Scheduler::sleepThread(int32_t const ms)
+{
+    int32_t time( ms / 1000 );
+    bool_t res( sSleep(time) );
+    if( res == true )
+    {
+        time = ms % 1000;
+        res = msSleep(time);
+    }
+    return res;
+
+}
+
+bool_t Scheduler::yieldThread()
+{
+    taskYIELD();
+    return true;
+}
+    
+void Scheduler::yieldThreadFromInterrupt()
+{
+    portYIELD_FROM_ISR();
+}
+
 bool_t Scheduler::initialize(api::Heap* resource)
 {
     bool_t res( false );
@@ -201,7 +219,15 @@ bool_t Scheduler::initialize(api::Heap* resource)
         {
             break;
         }
+        // Create PendSV interrupt
+        number = cpu_.getInterruptController().getNumberPendSupervisor();
+        intPendSv_ = cpu_.getInterruptController().createResource(isrSvc_, number);
+        if( intPendSv_ == NULLPTR || !intPendSv_->isConstructed() )
+        {
+            break;
+        }
         // Start resources
+        intPendSv_->enable();
         intSvc_->enable();
         intTim_->enable();        
         tim_->start();

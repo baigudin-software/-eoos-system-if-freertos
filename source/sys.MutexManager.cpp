@@ -1,7 +1,7 @@
 /**
  * @file      sys.MutexManager.cpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2023-2024, Sergey Baigudin, Baigudin Software
  */
 #include "sys.MutexManager.hpp"
 #include "lib.UniquePointer.hpp"

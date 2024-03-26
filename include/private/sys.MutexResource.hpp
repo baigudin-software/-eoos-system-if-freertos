@@ -1,10 +1,10 @@
 /**
- * @file      sys.Mutex.hpp
+ * @file      sys.MutexResource.hpp
  * @author    Sergey Baigudin, sergey@baigudin.software
- * @copyright 2021-2023, Sergey Baigudin, Baigudin Software
+ * @copyright 2021-2024, Sergey Baigudin, Baigudin Software
  */
-#ifndef SYS_MUTEX_HPP_
-#define SYS_MUTEX_HPP_
+#ifndef SYS_MUTEXRESOURCE_HPP_
+#define SYS_MUTEXRESOURCE_HPP_
 
 #include "sys.NonCopyable.hpp"
 #include "api.Mutex.hpp"
@@ -15,13 +15,13 @@ namespace sys
 {
 
 /**
- * @class Mutex.
- * @brief Mutex class.
+ * @class MutexResource.
+ * @brief MutexResource class.
  * 
  * @tparam A Heap memory allocator class.
  */
 template <class A>
-class Mutex : public NonCopyable<A>, public api::Mutex
+class MutexResource : public NonCopyable<A>, public api::Mutex
 {
     typedef NonCopyable<A> Parent;
 
@@ -30,12 +30,12 @@ public:
     /**
      * @brief Constructor.
      */
-    Mutex();
+    MutexResource();
 
     /**
      * @brief Destructor.
      */
-    virtual ~Mutex();
+    virtual ~MutexResource();
 
     /**
      * @copydoc eoos::api::Object::isConstructed()
@@ -95,7 +95,7 @@ private:
 };
 
 template <class A>
-Mutex<A>::Mutex()
+MutexResource<A>::MutexResource()
     : NonCopyable<A>()
     , api::Mutex()
     , mutex_()
@@ -105,25 +105,25 @@ Mutex<A>::Mutex()
 }
 
 template <class A>
-Mutex<A>::~Mutex()
+MutexResource<A>::~MutexResource()
 {
     deinitialize();
 }
 
 template <class A>
-bool_t Mutex<A>::isConstructed() const
+bool_t MutexResource<A>::isConstructed() const
 {
     return Parent::isConstructed();
 }
 
 template <class A>
-bool_t Mutex<A>::tryLock()
+bool_t MutexResource<A>::tryLock()
 {
     return false;
 }    
 
 template <class A>
-bool_t Mutex<A>::lock()
+bool_t MutexResource<A>::lock()
 {
     bool_t res( false );
     if( isConstructed() )
@@ -135,7 +135,7 @@ bool_t Mutex<A>::lock()
 }
 
 template <class A>
-bool_t Mutex<A>::unlock()
+bool_t MutexResource<A>::unlock()
 {
     bool_t res( false );
     if( isConstructed() )
@@ -147,7 +147,7 @@ bool_t Mutex<A>::unlock()
 }
 
 template <class A>
-bool_t Mutex<A>::construct()
+bool_t MutexResource<A>::construct()
 {
     bool_t res( false );
     do
@@ -166,7 +166,7 @@ bool_t Mutex<A>::construct()
 }
 
 template <class A>
-bool_t Mutex<A>::initialize()
+bool_t MutexResource<A>::initialize()
 {
     
     mutex_ = ::xSemaphoreCreateRecursiveMutexStatic( &buffer_ );
@@ -174,7 +174,7 @@ bool_t Mutex<A>::initialize()
 }
 
 template <class A>
-void Mutex<A>::deinitialize()
+void MutexResource<A>::deinitialize()
 {
     if( mutex_ != NULL )
     {
@@ -184,4 +184,4 @@ void Mutex<A>::deinitialize()
 
 } // namespace sys
 } // namespace eoos
-#endif // SYS_MUTEX_HPP_
+#endif // SYS_MUTEXRESOURCE_HPP_
