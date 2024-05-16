@@ -150,7 +150,7 @@ private:
     ::StaticSemaphore_t buffer_;
     
     /**
-     * @brief Mutex FreeRTOS statatic buffer.
+     * @brief Higher priority task woken flag.
      *
      * The releaseFromInterrupt() function will set
      * the variable to pdTRUE if releaseing the semaphore caused a task
